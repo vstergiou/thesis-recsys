@@ -1,5 +1,5 @@
 import os
-
+from setuptools import setup
 
 cwd = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'requirements.txt')
 with open(cwd) as f:
