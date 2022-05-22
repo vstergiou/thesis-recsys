@@ -152,10 +152,10 @@ class MovieLensEnv(Env):
 
     def prepare_environment(self):
         current_path = os.path.dirname(__file__)
-        data_dir = os.path.join(current_path, "../output")
+        data_dir = os.path.join(current_path, "../../output")
         embeddings_path = os.path.join(
             current_path,
-            "../mlfairnessgym/environments/recommenders/movielens_factorization.json",
+            "../../mlfairnessgym/environments/recommenders/movielens_factorization.json",
         )
         env_config = movie_lens.EnvConfig(
             seeds=movie_lens.Seeds(0, 0),
