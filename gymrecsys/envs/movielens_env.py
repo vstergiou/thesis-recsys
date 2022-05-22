@@ -3,9 +3,9 @@ import functools
 import attr
 #import sys
 #sys.path.insert(0, '/Users/vstergiou/Desktop/thesis-movielensgym')
-from pydeeprecsys.mlfairnessgym.environments.recommenders import movie_lens_utils
-from pydeeprecsys.mlfairnessgym.environments.recommenders import recsim_samplers
-from pydeeprecsys.mlfairnessgym.environments.recommenders import movie_lens_dynamic as movie_lens
+from mlfairnessgym.environments.recommenders import movie_lens_utils
+from mlfairnessgym.environments.recommenders import recsim_samplers
+from mlfairnessgym.environments.recommenders import movie_lens_dynamic as movie_lens
 from recsim.simulator import recsim_gym
 from gym.envs.registration import register
 from gym.spaces import Box, Discrete
@@ -16,13 +16,13 @@ import math
 
 _env_specs = {
     "id": "MovieLensFairness-v0",
-    "entry_point": "pydeeprecsys.pydeeprecsys.movielens_fairness_env:MovieLensFairness",
+    "entry_point": "gymrecsys.envs.movielens_env:MovieLensEnv",
     "max_episode_steps": 50,
 }
 register(**_env_specs)
 
 
-class MovieLensFairness(Env):
+class MovieLensEnv(Env):
     """ MovieLens + MLFairnessGym + Recsim + Gym environment """
     id= "MovieLensFairness-v0"
 

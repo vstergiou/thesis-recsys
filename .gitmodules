@@ -1,3 +1,6 @@
 [submodule "ml-fairness-gym"]
 	path = ml-fairness-gym
 	url = https://github.com/vstergiou/ml-fairness-gym.git
+[submodule "mlfairnessgym"]
+	path = mlfairnessgym
+	url = https://github.com/vstergiou/ml-fairness-gym.git
