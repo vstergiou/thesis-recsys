@@ -1,11 +1,11 @@
 import os
 import functools
 import attr
-#import sys
-#sys.path.insert(0, '/Users/vstergiou/Desktop/thesis-movielensgym')
-from mlfairnessgym.environments.recommenders import movie_lens_utils
-from mlfairnessgym.environments.recommenders import recsim_samplers
-from mlfairnessgym.environments.recommenders import movie_lens_dynamic as movie_lens
+import sys
+sys.path.insert(0, '/Users/vstergiou/Desktop/thesis-movielensgym')
+from pydeeprecsys.mlfairnessgym.environments.recommenders import movie_lens_utils
+from pydeeprecsys.mlfairnessgym.environments.recommenders import recsim_samplers
+from pydeeprecsys.mlfairnessgym.environments.recommenders import movie_lens_dynamic as movie_lens
 from recsim.simulator import recsim_gym
 from gym.envs.registration import register
 from gym.spaces import Box, Discrete
@@ -16,7 +16,7 @@ import math
 
 _env_specs = {
     "id": "MovieLensFairness-v0",
-    "entry_point": "gymrecsys.envs.movielens_env:MovieLensEnv",
+    "entry_point": "pydeeprecsys.pydeeprecsys.movielens_fairness_env:MovieLensFairness",
     "max_episode_steps": 50,
 }
 register(**_env_specs)
@@ -33,7 +33,10 @@ class MovieLensEnv(Env):
         self._rng = np.random.RandomState(seed=seed)
         self.ndcg = []
         self.dcg = []
+        self.ctr = []
 
+    def _get_ndcg(self):
+        return self.ndcg
 
     def _get_product_relevance(self, product_id: int) -> float:
         """ Relevance in range (0,1) """
@@ -55,6 +58,7 @@ class MovieLensEnv(Env):
         return sum([relevances[i] / math.log(i + 2, 2) for i in range(len(relevances))])
 
     def _calculate_ndcg(self, slate_product_ids: List[int]) -> float:
+
         relevances = [self._get_product_relevance(p) for p in slate_product_ids]
         dcg = self._get_dcg(relevances)
         self.dcg.append(dcg)
@@ -62,17 +66,33 @@ class MovieLensEnv(Env):
         idcg = self._get_dcg(ideal_relevances)
         self.ndcg.append(dcg / idcg)
 
+    def _calculate_ctr(self, slate_product_ids: List[int]) -> float:
+        #print(f'slate product ids: {slate_product_ids}')
+        if type(slate_product_ids) is np.int64:
+            slate_product_ids = [slate_product_ids]
+        relevances = [self._get_product_relevance(p) for p in slate_product_ids]
+        #print(f'relevances: {relevances}')
+        clicks = len([i for i in relevances if i > 3.5])
+        self.ctr.append(clicks / len(slate_product_ids))
+
+
     def step(self, action: Union[int, List[int]]):
         """ Normalize reward and flattens/normalizes state """
         # if slate_size > 1
+        self._calculate_ctr(action)
+        #print(f'ctr: {self.ctr}')
         if type(action) in [list, np.ndarray, np.array]:
             self._calculate_ndcg(action)
             state, reward, done, info = self.internal_env.step(action)
             encoded_state, info = self.movielens_state_encoder(state, action, info)
+
+            info['ndcg'] = self.ndcg
+            info['ctr'] = self.ctr
             return encoded_state, reward / 5, done, info
         else:
             state, reward, done, info = self.internal_env.step([action])
             encoded_state, info = self.movielens_state_encoder(state, [action], info)
+            info['ctr'] = self.ctr
             return encoded_state, reward / 5, done, info
 
     def reset(self):
@@ -152,10 +172,10 @@ class MovieLensEnv(Env):
 
     def prepare_environment(self):
         current_path = os.path.dirname(__file__)
-        data_dir = os.path.join(current_path, "../../output")
+        data_dir = os.path.join(current_path, "../output")
         embeddings_path = os.path.join(
             current_path,
-            "../../mlfairnessgym/environments/recommenders/movielens_factorization.json",
+            "../mlfairnessgym/environments/recommenders/movielens_factorization.json",
         )
         env_config = movie_lens.EnvConfig(
             seeds=movie_lens.Seeds(0, 0),
